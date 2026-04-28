@@ -110,3 +110,27 @@ resource "aws_instance" "web" {
     Project = "aws-cloud-infra-lab"
   }
 }
+
+# S3 Bucket
+resource "aws_s3_bucket" "lab" {
+  bucket = "aws-cloud-infra-lab-${random_id.suffix.hex}"
+
+  tags = {
+    Name    = "infra-lab-bucket"
+    Project = "aws-cloud-infra-lab"
+  }
+}
+
+resource "random_id" "suffix" {
+  byte_length = 4
+}
+
+# Block all public access to the bucket
+resource "aws_s3_bucket_public_access_block" "lab" {
+  bucket = aws_s3_bucket.lab.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
