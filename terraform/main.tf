@@ -134,3 +134,43 @@ resource "aws_s3_bucket_public_access_block" "lab" {
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
+
+# SNS Topic for alerts
+resource "aws_sns_topic" "alerts" {
+  name = "infra-lab-alerts"
+
+  tags = {
+    Name    = "infra-lab-alerts"
+    Project = "aws-cloud-infra-lab"
+  }
+}
+
+# SNS Email Subscription
+resource "aws_sns_topic_subscription" "email" {
+  topic_arn = aws_sns_topic.alerts.arn
+  protocol  = "email"
+  endpoint  = "juangamarrojr013@outlook.com"
+}
+
+# CloudWatch CPU Alarm
+resource "aws_cloudwatch_metric_alarm" "cpu_high" {
+  alarm_name          = "infra-lab-cpu-high"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = 120
+  statistic           = "Average"
+  threshold           = 80
+  alarm_description   = "Triggers when CPU exceeds 80% for 4 minutes"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+
+  dimensions = {
+    InstanceId = aws_instance.web.id
+  }
+
+  tags = {
+    Name    = "infra-lab-cpu-alarm"
+    Project = "aws-cloud-infra-lab"
+  }
+}
